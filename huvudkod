@@ -1,0 +1,105 @@
+import json
+import os
+from datetime import datetime
+import matplofrtlib.pyplot as plt
+
+# Filnamn for att spara viktmatningarna
+FILNAMN = 'viktdata.json'
+
+# Funktion for att ladda viktmätningar från fil
+def ladda_viktdata():
+    if os.path.exists(FILNAMN):
+        with open(FILNAMN, 'r') as fil:
+            return json.load(fil)
+    return []
+
+# Funktion för att spara viktmätningar till fil
+def spara_viktdata(viktdata):
+    with open(FILNAMN, 'w') as fil:
+        json.dump(viktdata, fil)
+
+# Funktion för att lägga till en ny vikt
+def lagg_till_vikt(vikt):
+    viktdata = ladda_viktdata()
+    datum = datetime.now().strftime('%Y-%m-%d')
+    viktdata.append({'datum': datum, 'vikt': vikt})
+    spara_viktdata(viktdata)
+    return viktdata
+
+# Funktion för att beräkna procentuell förändring
+def berakna_procentuell_forandring(viktdata):
+    if len(viktdata) >= 2:
+        startvikt = viktdata[0]['vikt']
+        slutvikt = viktdata[-1]['vikt']
+        procentuell_forandring = ((slutvikt - startvikt) / startvikt) * 100
+        return procentuell_forandring
+    else:
+        return None
+
+# Funktion för att visa viktdiagram
+def visa_viktdiagram(viktdata):
+    datum = [entry['datum'] for entry in viktdata]
+    vikt = [entry['vikt'] for entry in viktdata]
+    plt.plot(datum, vikt, marker='o')
+    plt.xlabel('Datum')
+    plt.ylabel('Vikt (kg)')
+    plt.title('Vikt över tid')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+# Funktion för att radera all viktdata
+def radera_all_viktdata():
+    if os.path.exists(FILNAMN):
+        os.remove(FILNAMN)
+    print("All viktdata har raderats.")
+
+# Huvudmeny
+def huvudmeny():
+    while True:
+        print("\nViktkontroll Program")
+        print("1. Lägg till ny vikt")
+        print("2. Visa alla viktmätningar")
+        print("3. Visa procentuell förändring")
+        print("4. Visa viktdiagram")
+        print("5. Radera all viktdata")
+        print("6. Avsluta")
+
+        val = input("Välj ett alternativ: ")
+
+        if val == '1':
+            vikt = float(input("Vad väger du? "))
+            viktdata = lagg_till_vikt(vikt)
+            if len(viktdata) >= 5:
+                procentuell_forandring = berakna_procentuell_forandring(viktdata)
+                print(f"Procentuell förändring i vikt över de senaste 5 dagarna: {procentuell_forandring:.2f}%")
+        elif val == '2':
+            viktdata = ladda_viktdata()
+            for entry in viktdata:
+                print(f"{entry['datum']}: {entry['vikt']} kg")
+        elif val == '3':
+            viktdata = ladda_viktdata()
+            procentuell_forandring = berakna_procentuell_forandring(viktdata)
+            if procentuell_forandring is not None:
+                print(f"Procentuell förändring i vikt: {procentuell_forandring:.2f}%")
+            else:
+                print("Inte tillräckligt med data för att beräkna förändring.")
+        elif val == '4':
+            viktdata = ladda_viktdata()
+            if viktdata:
+                visa_viktdiagram(viktdata)
+            else:
+                print("Ingen viktdata tillgänglig.")
+        elif val == '5':
+            radera_all_viktdata()
+        elif val == '6':
+            break
+        else:
+            print("Ogiltigt val. Försök igen.")
+
+# Starta programmet
+if __name__ == "__main__":
+    huvudmeny()
+
+
+
